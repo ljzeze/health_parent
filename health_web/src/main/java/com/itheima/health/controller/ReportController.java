@@ -13,25 +13,23 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import sun.misc.Cleaner;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.beans.SimpleBeanInfo;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * <p>
- *
- * </p>
- *
- * @author: Eric
- * @since: 2021/1/15
- */
+ * 报表展示
+ * @Author: Eric
+ * @Date: 2021/1/18 21:29
+ **/
 @RestController
 @RequestMapping("report")
 public class ReportController {
@@ -45,22 +43,55 @@ public class ReportController {
     @Reference
     private ReportService reportService;
 
+    /**
+     * 会员数量折线图
+     * @Author: HuChunping
+     * @Date: 2021/1/18 21:43
+     * @param monthRange: 日期范围：格式：2020-01,2021-01
+     * @return: com.itheima.health.entity.Result
+     **/
     @GetMapping("/getMemberReport")
-    public Result getMemberReport(){
-        //1. cntroller接收
-        //2. 生成12个月的数据，2020-02, 获取日历对象
-        Calendar car = Calendar.getInstance();
-        // 过去1年
-        car.add(Calendar.YEAR, -1);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM");
-        //List<String> months(12个月)
-        List<String> months = new ArrayList<String>();
-        for (int i = 0; i < 12; i++) {
-            car.add(Calendar.MONTH,1);
-            // 添加月份 2020-02
-            months.add(sdf.format(car.getTime()));
+    public Result getMemberReport(String monthRange) throws ParseException {
+        String[] m = monthRange.split(",");
+        // 开始日期字符串
+        String startTimeStr = m[0];
+        // 结束日期字符串
+        String endTimeStr = m[1];
+
+        // 获取当前的年月
+        YearMonth now = YearMonth.now();
+        String timeNowStr = now.format(DateTimeFormatter.ofPattern("yyyy-MM"));
+        //
+        if (startTimeStr.compareTo(timeNowStr)>0) {
+            return new Result(false, "开始日期不能大于当前日期");
         }
-        //3. 调用服务查询 List<String> months(12个月)
+
+        // 如果结束日期大于当前日期，令结束日期等于当前日期
+        if (endTimeStr.compareTo(timeNowStr)>0){
+            endTimeStr = timeNowStr;
+        }
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM");
+        // 查询月份集合
+        List<String> months = new ArrayList<String>();
+
+        // 获取两个日历对象，存储开始、结束日期
+        Calendar startTime = Calendar.getInstance();
+        Calendar endTime = Calendar.getInstance();
+
+        // 设置日历的开始结束时间
+        startTime.setTime(sdf.parse(startTimeStr));
+        endTime.setTime(sdf.parse(endTimeStr));
+
+        // 遍历添加年月
+        while (startTime.before(endTime)) {
+            months.add(sdf.format(startTime.getTime()));
+            startTime.add(Calendar.MONTH, 1);
+        }
+        // 上面的循环不会加入最后一个月，手动加入
+        months.add(sdf.format(endTime.getTime()));
+
+        //3. 调用服务查询 List<String> months
         List<Integer> memberCount = memberService.getMemberReport(months);
         // 返回给页面
         Map<String,Object> map = new HashMap<String,Object>();
