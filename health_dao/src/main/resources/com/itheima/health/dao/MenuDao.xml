@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.itheima.health.dao.MenuDao">
+    <!--查询所有菜单-->
+       <select id="children" resultType="menu">
+           select * from t_menu
+       </select>
+
+    <!--添加菜单-->
+    <insert id="add" parameterType="menu">
+ insert into t_menu (name,linkUrl,path,priority,description,icon,parentMenuId,level)
+        values(#{name},#{linkUrl},#{path},#{priority},#{description},#{icon},#{parentMenuId},#{level})
+    </insert>
+
+    <!--添加菜单跟角色的关联-->
+    <insert id="addMenuRole" parameterType="int">
+         insert into t_role_menu (menu_id,role_id)
+        values(#{menuId},#{roleId})
+    </insert>
+
+    <!--根据id查询菜单-->
+    <select id="findById" parameterType="int" resultType="menu">
+        select * from t_menu where id=#{id}
+    </select>
+
+   <!--分页查询菜单-->
+    <select id="findByCondition" parameterType="string" resultType="menu">
+        select * from t_menu
+        <where>
+            <if test="value != null and value.length > 0">
+                      /*根据菜单名字和优先级模糊查询*/
+                name like #{queryString}
+            </if>
+        </where>
+    </select>
+
+    <!--修改菜单-->
+    <update id="update" parameterType="menu">
+        update t_menu
+        set
+          name =#{name},
+          linkUrl=#{linkUrl},
+          path =#{path},
+          priority=#{priority},
+          icon = #{icon},
+          description=#{description},
+          parentMenuId=#{parentMenuId},
+          level =#{level}
+          where id = #{id}
+    </update>
+
+<!--查询该id是否有关联-->
+    <select id="findCountByMenuId" parameterType="int" resultType="int" >
+        select count(1) from t_role_menu where menu_id=#{id}
+    </select>
+
+    <!--删除-->
+    <delete id="deleteById" parameterType="int">
+        delete from t_menu where id=#{id}
+    </delete>
+
+    <!--根据菜单id查询角色id-->
+    <select id="findRoleIdByMenuId" parameterType="int" resultType="int">
+        select role_id from t_role_menu where menu_id=#{id}
+    </select>
+
+    <!--删除角色与菜单的旧关联-->
+    <delete id="deleteRoleMenu" parameterType="int">
+        delete from t_role_menu where menu_id=#{id}
+    </delete>
+</mapper>

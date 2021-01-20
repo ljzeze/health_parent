@@ -17,6 +17,7 @@ public class Menu implements Serializable{
     private Set<Role> roles = new HashSet<Role>(0);//角色集合
     private List<Menu> children = new ArrayList<>();//子菜单集合
     private Integer parentMenuId;//父菜单id
+    private Integer level;//水平等级
 
     public Integer getId() {
         return id;
